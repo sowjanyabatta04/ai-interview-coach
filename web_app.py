@@ -6,6 +6,51 @@ from streamlit_autorefresh import st_autorefresh
 from reportlab.pdfgen import canvas
 import os
 
+col1, col2, col3 = st.columns([1,1,1])
+
+with col2:
+    st.image("logo.jpg", width=150)
+
+st.set_page_config(
+    page_title="AI Interview Coach",
+    page_icon="🤖",
+    layout="wide"
+)
+
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(to right, #141e30, #243b55);
+    color: white;
+}
+
+h1, h2, h3 {
+    color: #00ffd5 !important;
+    text-align: center;
+}
+
+.stButton > button {
+    width: 100%;
+    border-radius: 12px;
+    height: 3em;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.stTextInput input, .stTextArea textarea {
+    border-radius: 12px;
+}
+
+[data-testid="stFileUploader"] {
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.info("Welcome! Practice technical and HR interviews with AI-powered feedback.")
+
 def get_resume_questions(text):
     questions = []
 
@@ -56,7 +101,13 @@ def generate_pdf(name, category, score):
     c.save()
     return filename
 
-st.title("AI Interview Coach")
+st.markdown("""
+<h1>🤖 AI Interview Coach</h1>
+<p style='text-align:center;font-size:20px;color:#dddddd;'>
+Practice interviews like a real candidate
+</p>
+""", unsafe_allow_html=True)
+
 
 # Session state setup
 if "round" not in st.session_state:
@@ -78,6 +129,17 @@ if resume is not None:
     resume_text = resume.read().decode("utf-8")
     st.success("Resume uploaded successfully!")
 category = st.selectbox("Choose Category", ["Python", "HR", "AI"])
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Questions", "5")
+
+with col2:
+    st.metric("Time / Question", "60s")
+
+with col3:
+    st.metric("Mode", "AI")
 
 # Start Interview
 if st.button("Start Interview"):
@@ -108,6 +170,9 @@ if st.button("Start Interview"):
 # Interview flow
 if 0 < st.session_state.round <= 5:
     st.subheader(f"Round {st.session_state.round}/5")
+
+    progress = st.session_state.round / 5
+    st.progress(progress)
 
     # Timer runs only if answer not submitted
     if not st.session_state.answer_submitted:
@@ -142,17 +207,24 @@ if 0 < st.session_state.round <= 5:
 
     # Submit Answer
     if not st.session_state.answer_submitted:
-        if st.button("Submit Answer"):
-            score, feedback = analyze_answer(question, answer)
-            st.session_state.score += score
-            st.session_state.feedback = (score, feedback)
-            st.session_state.answer_submitted = True
+         if st.button("Submit Answer"):
+
+             with st.spinner("AI is analyzing your answer..."):
+                  score, feedback = analyze_answer(question, answer)
+
+             st.session_state.score += score
+             st.session_state.feedback = (score, feedback)
+             st.session_state.answer_submitted = True
 
     # Show Feedback
     if st.session_state.feedback:
         score, feedback = st.session_state.feedback
 
-        st.success(f"Score: {score}/10")
+        st.markdown(f"""
+        <div style='background:#1f2937;padding:20px;border-radius:15px;text-align:center;'>
+        <h2 style='color:#00ff99;'>Score: {score}/10</h2>
+        </div>
+        """, unsafe_allow_html=True)
         st.write("### Feedback:")
         for item in feedback:
             st.write("- " + item)
@@ -160,8 +232,30 @@ if 0 < st.session_state.round <= 5:
         # Final result after round 5
         if st.session_state.round == 5:
             avg = st.session_state.score / 5
-            st.header("Interview Completed!")
-            st.success(f"{name}, Final Score: {avg:.1f}/10")
+            st.balloons()
+            if avg >= 9:
+                label = "🏆 Excellent"
+            elif avg >= 7:
+                label = "🟢 Good"
+            elif avg >= 4:
+                label = "🟡 Average"
+            else:
+                label = "🔴 Needs Improvement"
+
+            st.markdown(f"""
+            <div style='background:#111827;
+                        padding:30px;
+                        border-radius:20px;
+                        text-align:center;
+                        margin-top:20px;'>
+                  <h1 style='color:#00ffd5;'>Interview Completed 🎉</h1>
+                  <h2 style='color:white;'>Candidate: {name}</h2>
+                  <h2 style='color:#00ff99;'>Final Score: {avg:.1f}/10</h2>
+                  <h2>{label}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.caption("Built by Sowjanya | AI Interview Coach © 2026")
 
             pdf_file = generate_pdf(name, category, avg)
 
