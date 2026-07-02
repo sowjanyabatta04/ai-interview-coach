@@ -1,3 +1,0 @@
-Name: Sowjanya
-Skills: Python, Machine Learning, AI, Streamlit
-Projects: AI Interview Coach
