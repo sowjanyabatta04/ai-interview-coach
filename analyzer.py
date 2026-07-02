@@ -1,40 +1,60 @@
 def analyze_answer(question, answer):
-    answer = answer.lower()
-    score = 0
     feedback = []
+    score = 0
 
-    keyword_db = {
-        "What is OOP?": ["object", "class", "inheritance", "polymorphism"],
-        "What is a list in Python?": ["ordered", "mutable", "elements"],
-        "What is machine learning?": ["data", "algorithm", "learn"],
-        "Difference between AI and ML?": ["ai", "ml", "subset"],
-    }
+    answer = answer.strip()
+    word_count = len(answer.split())
 
-    if question in keyword_db:
-        keywords = keyword_db[question]
-        matched = 0
+    # Empty answer
+    if word_count == 0:
+        return 0, ["No answer given."]
 
-        for word in keywords:
-            if word in answer:
-                matched += 1
+    # Very short answer (1-3 words)
+    if word_count <= 3:
+        score = 1
+        feedback.append("Answer is too short.")
+        feedback.append("Please explain in detail.")
 
-        score = 5 + matched
+    # Short answer (4-8 words)
+    elif word_count <= 8:
+        score = 3
+        feedback.append("Short answer.")
+        feedback.append("Add explanation and examples.")
 
-        if matched == len(keywords):
-            feedback.append("Excellent technical answer!")
-        elif matched >= 2:
-            feedback.append("Good answer but missing some key points.")
-        else:
-            feedback.append("Answer needs more technical details.")
-    else:
+    # Medium answer (9-20 words)
+    elif word_count <= 20:
         score = 5
-        feedback.append("Basic answer recorded.")
+        feedback.append("Decent answer.")
+        feedback.append("Can be more detailed.")
 
-    if len(answer.split()) < 6:
-        feedback.append("Try to explain in more detail.")
-        score -= 1
+    # Good answer (21-40 words)
+    elif word_count <= 40:
+        score = 7
+        feedback.append("Good answer.")
+        feedback.append("Clear explanation.")
+
+    # Excellent answer (40+ words)
+    else:
+        score = 9
+        feedback.append("Excellent answer.")
+        feedback.append("Detailed and well explained.")
+
+    # Bonus for useful keywords
+    keywords = [
+        "python", "team", "project", "experience",
+        "problem", "solution", "learning", "skill"
+    ]
+
+    bonus = 0
+    lower_answer = answer.lower()
+
+    for word in keywords:
+        if word in lower_answer:
+            bonus += 0.5
+
+    score += bonus
 
     if score > 10:
         score = 10
 
-    return score, feedback
+    return round(score), feedback
