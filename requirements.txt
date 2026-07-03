@@ -2,3 +2,5 @@ streamlit
 streamlit-autorefresh
 reportlab
 google-generativeai
+PyPDF2
+python-docx
