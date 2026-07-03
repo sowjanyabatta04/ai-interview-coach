@@ -5,11 +5,19 @@ from analyzer import analyze_answer
 from streamlit_autorefresh import st_autorefresh
 from reportlab.pdfgen import canvas
 import os
+from PyPDF2 import PdfReader
+from docx import Document
 
-col1, col2, col3 = st.columns([1,1,1])
+col1, col2, col3 = st.columns([4,1.35,4])
 
 with col2:
     st.image("logo.jpg", width=150)
+
+st.markdown("""
+<h2 style='text-align: center; color: white; margin-bottom: 5px;'>
+Welcome!
+</h2>
+""", unsafe_allow_html=True)
 
 st.set_page_config(
     page_title="AI Interview Coach",
@@ -20,7 +28,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(to right, #141e30, #243b55);
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     color: white;
 }
 
@@ -37,6 +45,11 @@ h1, h2, h3 {
     font-weight: bold;
 }
 
+.stButton > button {
+    background: linear-gradient(90deg, #4A00E0, #8E2DE2);
+    color: white;
+    border: none;
+}
 .stTextInput input, .stTextArea textarea {
     border-radius: 12px;
 }
@@ -48,8 +61,6 @@ h1, h2, h3 {
 }
 </style>
 """, unsafe_allow_html=True)
-
-st.info("Welcome! Practice technical and HR interviews with AI-powered feedback.")
 
 def get_resume_questions(text):
     questions = []
@@ -102,7 +113,12 @@ def generate_pdf(name, category, score):
     return filename
 
 st.markdown("""
-<h1>🤖 AI Interview Coach</h1>
+<h1 style='text-align:center;
+           color:#00ffd5;
+           margin-top:3px;
+           margin-bottom:0px;'>
+🤖 AI Interview Coach
+</h1>
 <p style='text-align:center;font-size:20px;color:#dddddd;'>
 Practice interviews like a real candidate
 </p>
@@ -123,10 +139,35 @@ if "time_left" not in st.session_state:
 
 
 name = st.text_input("Candidate Name")
-resume = st.file_uploader("Upload Resume (PDF/TXT)",type=["pdf", "txt"])
+resume = st.file_uploader(
+    "",
+    type=["pdf", "txt", "docx"])
+
 resume_text = ""
+
 if resume is not None:
-    resume_text = resume.read().decode("utf-8")
+    file_name = resume.name.lower()
+
+    # TXT
+    if file_name.endswith(".txt"):
+        resume_text = resume.read().decode("utf-8")
+
+    # PDF
+    elif file_name.endswith(".pdf"):
+        pdf_reader = PdfReader(resume)
+
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            if text:
+                resume_text += text
+
+    # DOCX
+    elif file_name.endswith(".docx"):
+        doc = Document(resume)
+
+        for para in doc.paragraphs:
+            resume_text += para.text + "\n"
+
     st.success("Resume uploaded successfully!")
 category = st.selectbox("Choose Category", ["Python", "HR", "AI"])
 
